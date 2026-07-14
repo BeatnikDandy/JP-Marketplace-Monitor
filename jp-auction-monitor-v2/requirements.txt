@@ -1,9 +1,0 @@
-sqlalchemy>=2.0
-python-dotenv
-pydantic-settings
-apscheduler
-python-telegram-bot
-httpx
-beautifulsoup4
-lxml
-playwright

@@ -1,1 +1,39 @@
+# Ambientes virtuais
 venv/
+.venv/
+env/
+
+# Credenciais e configuração local
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Bancos e dados locais
+data/*.db
+data/*.sqlite
+data/*.sqlite3
+data/cache/
+data/cookies/
+
+# Logs
+logs/
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Cópia local do projeto antigo
+jp-auction-monitor-v2/
