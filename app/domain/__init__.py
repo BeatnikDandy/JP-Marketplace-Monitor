@@ -5,6 +5,9 @@ from .category import (
     get_category,
 )
 from .collection import Collection
+from .keyword import Keyword
+from .listing import Listing
+from .search import Search
 from .user import User
 
 __all__ = [
@@ -12,6 +15,9 @@ __all__ = [
     "Category",
     "CategoryKey",
     "Collection",
+    "Keyword",
+    "Listing",
+    "Search",
     "User",
     "get_category",
 ]
