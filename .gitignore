@@ -37,3 +37,7 @@ Thumbs.db
 
 # Cópia local do projeto antigo
 jp-auction-monitor-v2/
+
+# Python cache
+__pycache__/
+*.py[cod]
