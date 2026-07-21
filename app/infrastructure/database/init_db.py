@@ -1,4 +1,9 @@
-from app.infrastructure.database.models import UserModel  # noqa: F401
+from app.infrastructure.database.models import (
+    CollectionModel,
+    KeywordModel,
+    SearchModel,
+    UserModel,
+)
 from app.infrastructure.database.session import Base, engine
 
 
