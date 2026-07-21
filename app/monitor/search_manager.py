@@ -1,16 +1,19 @@
 from typing import Any
 
 from app.database.db import SessionLocal
+from app.domain import Listing
 from app.database.repository import (
     get_active_searches,
     save_listing,
 )
 from app.infrastructure.database.repositories import (
     KeywordRepository,
+    ListingRepository,
     SearchRepository,
 )
 from app.infrastructure.database.session import session_scope
 from app.marketplaces.yahoo import YahooMarketplace
+from app.marketplaces.yahoo.factory import YahooListingFactory
 from app.monitor.deduplicator import Deduplicator
 from app.monitor.filter import is_valid_listing
 
@@ -73,13 +76,17 @@ class SearchManager:
         found = 0
         accepted = 0
         ignored = 0
+        inserted = 0
+        updated = 0
+        unchanged = 0
 
-        results: list[dict[str, Any]] = []
+        results: list[Listing] = []
         seen_urls: set[str] = set()
 
         with session_scope() as session:
             search_repository = SearchRepository(session)
             keyword_repository = KeywordRepository(session)
+            listing_repository = ListingRepository(session)
 
             searches = search_repository.list_active()
 
@@ -157,18 +164,49 @@ class SearchManager:
                         if url:
                             seen_urls.add(url)
 
-                        results.append(
-                            {
-                                **item,
-                                "search_id": search.id,
-                                "search_code": search.internal_code,
-                                "search_name": search.name,
-                                "keyword": keyword.value,
-                                "category": search.category.value,
-                            }
+                        listing = YahooListingFactory.from_dict(
+                            item,
+                            category=search.category,
                         )
 
                         accepted += 1
+
+                        existing = (
+                            listing_repository.find_by_external_id(
+                                marketplace=listing.marketplace,
+                                external_id=listing.external_id,
+                            )
+                        )
+
+                        if existing is None:
+                            persisted_listing = (
+                                listing_repository.add(listing)
+                            )
+
+                            inserted += 1
+                        else:
+                            price_changed = existing.update_price(
+                                listing.price
+                            )
+
+                            existing.title = listing.title
+                            existing.url = listing.url
+                            existing.category = listing.category
+                            existing.currency = listing.currency
+                            existing.image_url = listing.image_url
+                            existing.seller = listing.seller
+                            existing.auction_end = listing.auction_end
+
+                            persisted_listing = (
+                                listing_repository.save(existing)
+                            )
+
+                            if price_changed:
+                                updated += 1
+                            else:
+                                unchanged += 1
+
+                        results.append(persisted_listing)
 
         return {
             "searches_processed": searches_processed,
@@ -176,6 +214,9 @@ class SearchManager:
             "found": found,
             "accepted": accepted,
             "ignored": ignored,
+            "inserted": inserted,
+            "updated": updated,
+            "unchanged": unchanged,
             "results": results,
         }
 

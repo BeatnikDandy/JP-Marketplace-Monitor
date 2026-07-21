@@ -1,6 +1,7 @@
 from app.infrastructure.database.models import (
     CollectionModel,
     KeywordModel,
+    ListingModel,
     SearchModel,
     UserModel,
 )
