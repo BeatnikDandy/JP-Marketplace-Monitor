@@ -1,7 +1,7 @@
 from typing import Any
 
 from app.database.db import SessionLocal
-from app.domain import Listing
+from app.domain import Listing, PriceHistory
 from app.database.repository import (
     get_active_searches,
     save_listing,
@@ -9,6 +9,7 @@ from app.database.repository import (
 from app.infrastructure.database.repositories import (
     KeywordRepository,
     ListingRepository,
+    PriceHistoryRepository,
     SearchRepository,
 )
 from app.infrastructure.database.session import session_scope
@@ -79,6 +80,7 @@ class SearchManager:
         inserted = 0
         updated = 0
         unchanged = 0
+        price_history_created = 0
 
         results: list[Listing] = []
         seen_urls: set[str] = set()
@@ -87,6 +89,9 @@ class SearchManager:
             search_repository = SearchRepository(session)
             keyword_repository = KeywordRepository(session)
             listing_repository = ListingRepository(session)
+            price_history_repository = (
+                PriceHistoryRepository(session)
+            )
 
             searches = search_repository.list_active()
 
@@ -183,10 +188,27 @@ class SearchManager:
                                 listing_repository.add(listing)
                             )
 
+                            price_history_repository.add(
+                                PriceHistory(
+                                    listing_id=(
+                                        persisted_listing.id
+                                    ),
+                                    previous_price=None,
+                                    price=(
+                                        persisted_listing.price
+                                    ),
+                                )
+                            )
+
                             inserted += 1
+                            price_history_created += 1
                         else:
-                            price_changed = existing.update_price(
-                                listing.price
+                            previous_price = existing.price
+
+                            price_changed = (
+                                existing.update_price(
+                                    listing.price
+                                )
                             )
 
                             existing.title = listing.title
@@ -202,7 +224,22 @@ class SearchManager:
                             )
 
                             if price_changed:
+                                price_history_repository.add(
+                                    PriceHistory(
+                                        listing_id=(
+                                            persisted_listing.id
+                                        ),
+                                        previous_price=(
+                                            previous_price
+                                        ),
+                                        price=(
+                                            persisted_listing.price
+                                        ),
+                                    )
+                                )
+
                                 updated += 1
+                                price_history_created += 1
                             else:
                                 unchanged += 1
 
@@ -217,6 +254,9 @@ class SearchManager:
             "inserted": inserted,
             "updated": updated,
             "unchanged": unchanged,
+            "price_history_created": (
+                price_history_created
+            ),
             "results": results,
         }
 

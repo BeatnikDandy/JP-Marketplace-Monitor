@@ -9,6 +9,7 @@ from .keyword import Keyword
 from .listing import Listing
 from .search import Search
 from .user import User
+from .price_history import PriceHistory
 
 __all__ = [
     "CATEGORIES",
@@ -20,4 +21,5 @@ __all__ = [
     "Search",
     "User",
     "get_category",
+    "PriceHistory"
 ]
