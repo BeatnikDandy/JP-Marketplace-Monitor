@@ -62,7 +62,7 @@ def run_cycle(
         "Iniciando busca de anúncios."
     )
 
-    result = manager.run_v2()
+    result = manager.run()
 
     alerts_sent = asyncio.run(
         notifier.send_run_events(result)
