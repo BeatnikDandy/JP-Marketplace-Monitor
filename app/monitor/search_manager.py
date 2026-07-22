@@ -83,6 +83,8 @@ class SearchManager:
         price_history_created = 0
 
         results: list[Listing] = []
+        new_listings: list[dict[str, Any]] = []
+        price_drops: list[dict[str, Any]] = []
         seen_urls: set[str] = set()
 
         with session_scope() as session:
@@ -202,6 +204,14 @@ class SearchManager:
 
                             inserted += 1
                             price_history_created += 1
+
+                            new_listings.append(
+                                {
+                                    "search_name": search.name,
+                                    "keyword": keyword.value,
+                                    "listing": persisted_listing,
+                                }
+                            )
                         else:
                             previous_price = existing.price
 
@@ -240,6 +250,23 @@ class SearchManager:
 
                                 updated += 1
                                 price_history_created += 1
+
+                                if (
+                                    persisted_listing.price
+                                    < previous_price
+                                ):
+                                    price_drops.append(
+                                        {
+                                            "search_name": search.name,
+                                            "keyword": keyword.value,
+                                            "listing": (
+                                                persisted_listing
+                                            ),
+                                            "previous_price": (
+                                                previous_price
+                                            ),
+                                        }
+                                    )
                             else:
                                 unchanged += 1
 
@@ -257,6 +284,8 @@ class SearchManager:
             "price_history_created": (
                 price_history_created
             ),
+            "new_listings": new_listings,
+            "price_drops": price_drops,
             "results": results,
         }
 
